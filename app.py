@@ -75,38 +75,6 @@ if not is_cloud:
     except:
         pass
 
-# --- GRÁFICOS DE LINHA ---
-def criar_grafico_linha(df, ano):
-    cols = ["ESCOLA", "DIAGNÓSTICA - MAT", "FORMATIVA I - MAT"]
-    dados = df[cols].copy()
-
-    dados_long = dados.melt(
-        id_vars="ESCOLA",
-        value_vars=["DIAGNÓSTICA - MAT", "FORMATIVA I - MAT"],
-        var_name="Avaliação",
-        value_name="Desempenho"
-    )
-    dados_long["Avaliação"] = dados_long["Avaliação"].str.replace(" - MAT", "")
-
-    fig = px.line(
-        dados_long,
-        x="Avaliação",
-        y="Desempenho",
-        color="ESCOLA",
-        markers=True,
-        title=f"📉 Evolução do Desempenho - {ano}º Ano"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    if not is_cloud:
-        try:
-            fig.write_image(f"imagens/grafico_linha_{ano}ano.png")
-        except:
-            pass
-
-criar_grafico_linha(df_2ano, 2)
-criar_grafico_linha(df_5ano, 5)
-
 # Filtro por escola
 escolas_disponiveis = dados["ESCOLA"].unique()
 escolas_selecionadas = st.multiselect("Filtrar por Escola:", escolas_disponiveis)
