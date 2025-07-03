@@ -2,10 +2,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import plotly.figure_factory as ff
-
-# ⬅️ ADICIONADO para exportar imagens
 import os
 import plotly.io as pio
+import io
 
 # Garantir que a pasta 'imagens' exista
 os.makedirs("imagens", exist_ok=True)
@@ -54,8 +53,11 @@ fig_top5 = px.bar(top5, x="ESCOLA", y="CRESCIMENTO_%", title="🏆 Top 5 Escolas
                   text="CRESCIMENTO_%", color="CRESCIMENTO_%", color_continuous_scale="Greens")
 st.plotly_chart(fig_top5, use_container_width=True)
 
-# ⬅️ EXPORTANDO gráfico como imagem
-fig_top5.write_image("imagens/top5_crescimento.png")
+# Protegendo exportação
+try:
+    fig_top5.write_image("imagens/top5_crescimento.png")
+except Exception as e:
+    st.warning("⚠️ Erro ao exportar gráfico Top 5.")
 
 # Bottom 5 crescimento
 bottom5 = dados.sort_values(by="CRESCIMENTO_%", ascending=True).head(5)
@@ -63,8 +65,44 @@ fig_bottom5 = px.bar(bottom5, x="ESCOLA", y="CRESCIMENTO_%", title="🚨 Escolas
                      text="CRESCIMENTO_%", color="CRESCIMENTO_%", color_continuous_scale="Reds")
 st.plotly_chart(fig_bottom5, use_container_width=True)
 
-# ⬅️ EXPORTANDO gráfico como imagem
-fig_bottom5.write_image("imagens/bottom5_crescimento.png")
+try:
+    fig_bottom5.write_image("imagens/bottom5_crescimento.png")
+except Exception as e:
+    st.warning("⚠️ Erro ao exportar gráfico Bottom 5.")
+
+# --- GRÁFICOS DE LINHA ---
+def criar_grafico_linha(df, ano):
+    cols = ["ESCOLA", "DIAGNÓSTICA - MAT", "FORMATIVA I - MAT"]
+    dados = df[cols].copy()
+
+    dados_long = dados.melt(
+        id_vars="ESCOLA",
+        value_vars=["DIAGNÓSTICA - MAT", "FORMATIVA I - MAT"],
+        var_name="Avaliação",
+        value_name="Desempenho"
+    )
+    dados_long["Avaliação"] = dados_long["Avaliação"].str.replace(" - MAT", "")
+
+    fig = px.line(
+        dados_long,
+        x="Avaliação",
+        y="Desempenho",
+        color="ESCOLA",
+        markers=True,
+        title=f"📉 Evolução do Desempenho - {ano}º Ano"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    try:
+        fig.write_image(f"imagens/grafico_linha_{ano}ano.png")
+    except Exception:
+        st.warning(f"⚠️ Erro ao exportar gráfico de linha do {ano}º ano.")
+
+# Uso para 2º ano
+criar_grafico_linha(df_2ano, 2)
+
+# Uso para 5º ano
+criar_grafico_linha(df_5ano, 5)
 
 # Filtro por escola
 escolas_disponiveis = dados["ESCOLA"].unique()
@@ -88,8 +126,10 @@ def gerar_heatmap(df, ano):
     fig.update_layout(title_text=f"🔥 Mapa de Calor - {ano}º Ano", height=600)
     st.plotly_chart(fig, use_container_width=True)
 
-    # ⬅️ EXPORTANDO gráfico como imagem
-    fig.write_image(f"imagens/heatmap_{ano}ano.png")
+    try:
+        fig.write_image(f"imagens/heatmap_{ano}ano.png")
+    except Exception:
+        st.warning(f"⚠️ Erro ao exportar heatmap do {ano}º ano.")
 
 if ano_escolhido == "2º ANO" or ano_escolhido == "Todos":
     gerar_heatmap(df_2ano, 2)
@@ -97,21 +137,14 @@ if ano_escolhido == "2º ANO" or ano_escolhido == "Todos":
 if ano_escolhido == "5º ANO" or ano_escolhido == "Todos":
     gerar_heatmap(df_5ano, 5)
 
-import io
-
-# Salvar os dados em um buffer de memória
+# Botão para download dos dados filtrados
 excel_buffer = io.BytesIO()
 dados.to_excel(excel_buffer, index=False, engine='openpyxl')
 excel_buffer.seek(0)
 
-# Botão para download dos dados
 st.download_button(
     label="📥 Baixar Dados em Excel",
     data=excel_buffer,
     file_name='crescimento_escolar.xlsx',
     mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 )
-
-# python -m streamlit run app.py
-# ou,
-# streamlit run app.py
