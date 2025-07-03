@@ -6,8 +6,12 @@ import os
 import plotly.io as pio
 import io
 
+# Verifica se está rodando no Streamlit Cloud
+is_cloud = os.environ.get("STREAMLIT_SERVER_HEADLESS", "0") == "1"
+
 # Garantir que a pasta 'imagens' exista
-os.makedirs("imagens", exist_ok=True)
+if not is_cloud:
+    os.makedirs("imagens", exist_ok=True)
 
 # Carregando os dados
 df_2ano = pd.read_excel("2_ano_epv.xlsx")
@@ -53,11 +57,11 @@ fig_top5 = px.bar(top5, x="ESCOLA", y="CRESCIMENTO_%", title="🏆 Top 5 Escolas
                   text="CRESCIMENTO_%", color="CRESCIMENTO_%", color_continuous_scale="Greens")
 st.plotly_chart(fig_top5, use_container_width=True)
 
-# Protegendo exportação
-try:
-    fig_top5.write_image("imagens/top5_crescimento.png")
-except Exception as e:
-    st.warning("⚠️ Erro ao exportar gráfico Top 5.")
+if not is_cloud:
+    try:
+        fig_top5.write_image("imagens/top5_crescimento.png")
+    except Exception:
+        st.warning("⚠️ Erro ao exportar gráfico Top 5.")
 
 # Bottom 5 crescimento
 bottom5 = dados.sort_values(by="CRESCIMENTO_%", ascending=True).head(5)
@@ -65,10 +69,11 @@ fig_bottom5 = px.bar(bottom5, x="ESCOLA", y="CRESCIMENTO_%", title="🚨 Escolas
                      text="CRESCIMENTO_%", color="CRESCIMENTO_%", color_continuous_scale="Reds")
 st.plotly_chart(fig_bottom5, use_container_width=True)
 
-try:
-    fig_bottom5.write_image("imagens/bottom5_crescimento.png")
-except Exception as e:
-    st.warning("⚠️ Erro ao exportar gráfico Bottom 5.")
+if not is_cloud:
+    try:
+        fig_bottom5.write_image("imagens/bottom5_crescimento.png")
+    except Exception:
+        st.warning("⚠️ Erro ao exportar gráfico Bottom 5.")
 
 # --- GRÁFICOS DE LINHA ---
 def criar_grafico_linha(df, ano):
@@ -93,15 +98,13 @@ def criar_grafico_linha(df, ano):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    try:
-        fig.write_image(f"imagens/grafico_linha_{ano}ano.png")
-    except Exception:
-        st.warning(f"⚠️ Erro ao exportar gráfico de linha do {ano}º ano.")
+    if not is_cloud:
+        try:
+            fig.write_image(f"imagens/grafico_linha_{ano}ano.png")
+        except Exception:
+            st.warning(f"⚠️ Erro ao exportar gráfico de linha do {ano}º ano.")
 
-# Uso para 2º ano
 criar_grafico_linha(df_2ano, 2)
-
-# Uso para 5º ano
 criar_grafico_linha(df_5ano, 5)
 
 # Filtro por escola
@@ -126,10 +129,11 @@ def gerar_heatmap(df, ano):
     fig.update_layout(title_text=f"🔥 Mapa de Calor - {ano}º Ano", height=600)
     st.plotly_chart(fig, use_container_width=True)
 
-    try:
-        fig.write_image(f"imagens/heatmap_{ano}ano.png")
-    except Exception:
-        st.warning(f"⚠️ Erro ao exportar heatmap do {ano}º ano.")
+    if not is_cloud:
+        try:
+            fig.write_image(f"imagens/heatmap_{ano}ano.png")
+        except Exception:
+            st.warning(f"⚠️ Erro ao exportar heatmap do {ano}º ano.")
 
 if ano_escolhido == "2º ANO" or ano_escolhido == "Todos":
     gerar_heatmap(df_2ano, 2)
@@ -137,7 +141,7 @@ if ano_escolhido == "2º ANO" or ano_escolhido == "Todos":
 if ano_escolhido == "5º ANO" or ano_escolhido == "Todos":
     gerar_heatmap(df_5ano, 5)
 
-# Botão para download dos dados filtrados
+# Download dos dados
 excel_buffer = io.BytesIO()
 dados.to_excel(excel_buffer, index=False, engine='openpyxl')
 excel_buffer.seek(0)
