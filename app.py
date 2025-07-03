@@ -60,6 +60,8 @@ st.plotly_chart(fig_top5, use_container_width=True)
 if not is_cloud:
     try:
         fig_top5.write_image("imagens/top5_crescimento.png")
+    except:
+        pass
 
 # Bottom 5 crescimento
 bottom5 = dados.sort_values(by="CRESCIMENTO_%", ascending=True).head(5)
@@ -70,6 +72,8 @@ st.plotly_chart(fig_bottom5, use_container_width=True)
 if not is_cloud:
     try:
         fig_bottom5.write_image("imagens/bottom5_crescimento.png")
+    except:
+        pass
 
 # --- GRÁFICOS DE LINHA ---
 def criar_grafico_linha(df, ano):
@@ -97,6 +101,8 @@ def criar_grafico_linha(df, ano):
     if not is_cloud:
         try:
             fig.write_image(f"imagens/grafico_linha_{ano}ano.png")
+        except:
+            pass
 
 criar_grafico_linha(df_2ano, 2)
 criar_grafico_linha(df_5ano, 5)
@@ -126,6 +132,8 @@ def gerar_heatmap(df, ano):
     if not is_cloud:
         try:
             fig.write_image(f"imagens/heatmap_{ano}ano.png")
+        except:
+            pass
 
 if ano_escolhido == "2º ANO" or ano_escolhido == "Todos":
     gerar_heatmap(df_2ano, 2)
